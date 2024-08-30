@@ -31,9 +31,12 @@ Dictionary<string, int> productSeats = [];
 foreach (string line in lines)
 {
     lineNumber++;
-    if (line.Contains("OUT:") || line.Contains("IN:"))
+
+    string correctedLine = line.Trim();
+
+    if (correctedLine.Contains("OUT:") || correctedLine.Contains("IN:"))
     {
-        string[] lineParts = line.Split(' ');
+        string[] lineParts = correctedLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         string productName = lineParts[3];
 
         if (!productSeats.TryGetValue(productName, out int value))
