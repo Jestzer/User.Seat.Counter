@@ -19,14 +19,17 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"There was an error reading the license file: {ex.Message}");
+    Console.WriteLine($"There was an error reading the log file: {ex.Message}");
     return;
 }
 
 string[] lines = fileContents.Split(new[] { '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries);
 
 int lineNumber = 0;
-Dictionary<string, int> productSeats = [];
+
+// A Dictionary inside of a Dictionary to keep track of users and the products they have checked out.
+Dictionary<string, Dictionary<string, int>> userProductSeats = [];
+// user, product, seat count.
 
 foreach (string line in lines)
 {
@@ -36,39 +39,67 @@ foreach (string line in lines)
 
     if (correctedLine.Contains("OUT:") || correctedLine.Contains("IN:"))
     {
-        string[] lineParts = correctedLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        string productName = lineParts[3];
+        try
+        {
+            string[] lineParts = correctedLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string productName = lineParts[3];
+            string[] userAndHostnameParts = lineParts[4].Split(new[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
+            string user = userAndHostnameParts[0];
 
-        if (!productSeats.TryGetValue(productName, out int value))
-        {
-            value = 0;
-            productSeats[productName] = value; // Initialize seat count for new products
-        }
+            // Initialize dictionary for the user if it doesn't exist.
+            if (!userProductSeats.TryGetValue(user, out var productSeats))
+            {
+                productSeats = [];
+                userProductSeats[user] = productSeats;
+            }
 
-        if (lineParts[2] == "OUT:") // Determine if a seat is being checked IN or OUT.
-        {
-            productSeats[productName] = ++value;
+            // Initialize seat count for the product if it doesn't exist.
+            if (!productSeats.TryGetValue(productName, out int seatCount))
+            {
+                seatCount = 0;
+                productSeats[productName] = seatCount;
+            }
+
+            if (lineParts[2] == "OUT:") // A seat is being checked out.
+            {
+                productSeats[productName] = ++seatCount;
+            }
+            else if (lineParts[2] == "IN:") // A seat is being checked in.
+            {
+                productSeats[productName] = --seatCount;
+            }
+            else
+            {
+                Console.WriteLine($"IN: or OUT: not detected as the third line part. Line number in question: {lineNumber}. Line part: {lineParts[2]}. Exiting.");
+                Environment.Exit(1);
+            }
         }
-        else if (lineParts[2] == "IN:")
+        catch (Exception ex)
         {
-            productSeats[productName] = --value;
-        }
-        else
-        {
-            Console.WriteLine($"IN: or OUT: not detected as the third line part. Line number in question: {lineNumber}. Line part: {lineParts[2]}. Exiting.");
-            Environment.Exit(1);
+            Console.WriteLine($"There was an error attempting to calculate seat count: {ex.Message}");
+            return;
         }
     }
 }
 
-foreach (var entry in productSeats)
+// Print out the results.
+foreach (var userEntry in userProductSeats)
 {
-    if (entry.Value == 1)
+    string user = userEntry.Key;
+    Console.WriteLine($"User: {user}");
+
+    foreach (var productEntry in userEntry.Value)
     {
-        Console.WriteLine($"{entry.Key} has {entry.Value} seat checked out.");
-    }
-    else
-    {
-        Console.WriteLine($"{entry.Key} has {entry.Value} seats checked out.");
+        string product = productEntry.Key;
+        int seatCount = productEntry.Value;
+
+        if (seatCount == 1)
+        {
+            Console.WriteLine($"  {product}: {seatCount} seat checked out.");
+        }
+        else
+        {
+            Console.WriteLine($"  {product}: {seatCount} seats checked out.");
+        }
     }
 }
