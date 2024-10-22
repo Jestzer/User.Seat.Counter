@@ -23,7 +23,7 @@ catch (Exception ex)
     return;
 }
 
-string[] lines = fileContents.Split(new[] { '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+string[] lines = fileContents.Split(['\r', '\n', '\t'], StringSplitOptions.RemoveEmptyEntries);
 
 int lineNumber = 0;
 
@@ -41,7 +41,7 @@ foreach (string line in lines)
     {
         try
         {
-            string[] lineParts = correctedLine.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] lineParts = correctedLine.Split([' '], StringSplitOptions.RemoveEmptyEntries);
             string productName = lineParts[3];
             string[] userAndHostnameParts = lineParts[4].Split(new[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
             string user = userAndHostnameParts[0];
